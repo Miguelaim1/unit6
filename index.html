@@ -1,0 +1,464 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>English Conversation Tutor</title>
+
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #ffffff;
+      color: #111;
+      margin: 0;
+      padding: 0;
+      text-align: center;
+    }
+
+    .container {
+      max-width: 760px;
+      margin: 40px auto;
+      padding: 0 20px;
+    }
+
+    h1 {
+      font-size: 32px;
+      margin-bottom: 14px;
+      letter-spacing: 1px;
+    }
+
+    .subtitle {
+      font-size: 16px;
+      color: #333;
+      margin-bottom: 20px;
+    }
+
+    #chatBox {
+      width: 100%;
+      height: 320px;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      text-align: left;
+      padding: 28px 18px;
+      box-sizing: border-box;
+      overflow-y: auto;
+      margin-bottom: 20px;
+      font-size: 16px;
+      line-height: 1.6;
+    }
+
+    .message {
+      margin-bottom: 14px;
+    }
+
+    .tutor-label {
+      color: green;
+      font-weight: bold;
+    }
+
+    .you-label {
+      color: #1d4ed8;
+      font-weight: bold;
+    }
+
+    #speakButton {
+      font-size: 18px;
+      padding: 16px 28px;
+      border: 1px solid #ccc;
+      border-radius: 10px;
+      background: white;
+      cursor: pointer;
+    }
+
+    #speakButton:hover {
+      background: #f5f5f5;
+    }
+
+    #speakButton:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+
+    #status {
+      margin-top: 16px;
+      font-size: 14px;
+      color: #444;
+      min-height: 20px;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <h1>English Conversation Tutor 🎧</h1>
+    <div class="subtitle">Tap the microphone and speak in English.</div>
+
+    <div id="chatBox">
+      <div class="message">
+        <span class="tutor-label">Tutor:</span>
+        Hi. Let's practice everyday English together!
+      </div>
+    </div>
+
+    <button id="speakButton">🎤 Tap to speak</button>
+
+    <div id="status">Ready.</div>
+  </div>
+
+  <script>
+    const chatBox = document.getElementById("chatBox");
+    const speakButton = document.getElementById("speakButton");
+    const statusDiv = document.getElementById("status");
+
+const personas = [
+  {
+    name: "Sofia",
+    country: "Spain",
+    reason: "studying Japanese food culture",
+    personality: "warm, curious, and talkative",
+    likes: "street food, photography, and old buildings",
+    dislikes: "cold weather and crowded trains"
+  },
+  {
+    name: "Liam",
+    country: "New Zealand",
+    reason: "snowboarding in Japan",
+    personality: "relaxed, friendly, and outdoorsy",
+    likes: "mountains, ramen, and music",
+    dislikes: "big cities and waking up early"
+  },
+  {
+    name: "Maya",
+    country: "India",
+    reason: "visiting universities in Japan",
+    personality: "polite, thoughtful, and a little shy",
+    likes: "tea, books, and quiet cafes",
+    dislikes: "very noisy places and spicy food that is too strong"
+  },
+  {
+    name: "Noah",
+    country: "Germany",
+    reason: "traveling by train around Japan",
+    personality: "calm, practical, and honest",
+    likes: "trains, hiking, and Japanese gardens",
+    dislikes: "being late and expensive restaurants"
+  },
+  {
+    name: "Ava",
+    country: "Brazil",
+    reason: "learning about Japanese festivals",
+    personality: "cheerful, energetic, and expressive",
+    likes: "dancing, festivals, and sweet snacks",
+    dislikes: "rainy days and quiet parties"
+  },
+  {
+    name: "Ethan",
+    country: "South Africa",
+    reason: "visiting a friend in Japan",
+    personality: "easygoing, funny, and friendly",
+    likes: "sports, barbecue, and meeting new people",
+    dislikes: "long lines and small hotel rooms"
+  },
+  {
+    name: "Chloe",
+    country: "France",
+    reason: "learning about Japanese art and design",
+    personality: "creative, stylish, and observant",
+    likes: "museums, coffee, and fashion",
+    dislikes: "fast food and bad coffee"
+  },
+  {
+    name: "Omar",
+    country: "Egypt",
+    reason: "seeing Japanese temples and castles",
+    personality: "curious, calm, and respectful",
+    likes: "history, architecture, and walking tours",
+    dislikes: "cold rain and getting lost"
+  },
+  {
+    name: "Ella",
+    country: "Finland",
+    reason: "experiencing Japanese nature",
+    personality: "quiet, kind, and thoughtful",
+    likes: "forests, hot springs, and simple food",
+    dislikes: "loud restaurants and humid weather"
+  },
+  {
+    name: "Mateo",
+    country: "Mexico",
+    reason: "trying Japanese food and culture",
+    personality: "funny, social, and adventurous",
+    likes: "food, soccer, and talking with local people",
+    dislikes: "strict schedules and bland food"
+  }
+];
+
+// Choose one persona when the page loads.
+// This persona stays the same for the whole conversation.
+const persona = personas[Math.floor(Math.random() * personas.length)];
+    
+    let history = [];
+    let recognition = null;
+    let isListening = false;
+    let isWaiting = false;
+
+    let finalTranscript = "";
+    let latestTranscript = "";
+    let silenceTimer = null;
+    let hasSubmittedSpeech = false;
+
+    let currentAudio = null;
+
+    // 3000 = wait 3 seconds after the student stops speaking
+    const SPEECH_END_DELAY = 3000;
+
+    function setStatus(text) {
+      statusDiv.textContent = text;
+    }
+
+    function addMessage(role, text) {
+      const div = document.createElement("div");
+      div.className = "message";
+
+      const label = document.createElement("span");
+      label.className = role === "user" ? "you-label" : "tutor-label";
+      label.textContent = role === "user" ? "You: " : "Tutor: ";
+
+      const content = document.createElement("span");
+      content.textContent = text;
+
+      div.appendChild(label);
+      div.appendChild(content);
+
+      chatBox.appendChild(div);
+      chatBox.scrollTop = chatBox.scrollHeight;
+    }
+
+    async function sendMessage(userMessage) {
+      if (!userMessage || isWaiting) return;
+
+      isWaiting = true;
+      speakButton.disabled = true;
+      setStatus("Tutor is thinking...");
+
+      addMessage("user", userMessage);
+
+      try {
+        const response = await fetch("/api/chat", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            history,
+            message: userMessage,
+            persona,
+          }),
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(data.error || "API error");
+        }
+
+        const reply = data.reply || data.response || data.message || data.text;
+
+        if (!reply) {
+          throw new Error("No tutor reply found.");
+        }
+
+        history.push({ role: "user", content: userMessage });
+        history.push({ role: "assistant", content: reply });
+
+        // Important:
+        // This prepares the voice first.
+        // The Tutor text appears when the audio starts.
+        await showTutorReplyWithVoice(reply);
+
+      } catch (error) {
+        console.error(error);
+        addMessage("assistant", "Sorry, something went wrong.");
+        setStatus("Error.");
+      } finally {
+        isWaiting = false;
+        speakButton.disabled = false;
+      }
+    }
+
+    async function showTutorReplyWithVoice(text) {
+      let textShown = false;
+
+      function showTextOnce() {
+        if (!textShown) {
+          addMessage("assistant", text);
+          textShown = true;
+        }
+      }
+
+      try {
+        setStatus("Preparing voice...");
+
+        if (currentAudio) {
+          currentAudio.pause();
+          currentAudio = null;
+        }
+
+        const response = await fetch("/api/tts", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ text }),
+        });
+
+        if (!response.ok) {
+          throw new Error("TTS request failed");
+        }
+
+        const audioBlob = await response.blob();
+        const audioUrl = URL.createObjectURL(audioBlob);
+
+        currentAudio = new Audio(audioUrl);
+
+        currentAudio.onplay = () => {
+          showTextOnce();
+          setStatus("Speaking...");
+        };
+
+        currentAudio.onended = () => {
+          setStatus("Ready.");
+          URL.revokeObjectURL(audioUrl);
+        };
+
+        currentAudio.onerror = () => {
+          showTextOnce();
+          setStatus("Audio playback error.");
+          URL.revokeObjectURL(audioUrl);
+        };
+
+        await currentAudio.play();
+
+        // Backup: if onplay is slow, still show the text shortly after playback begins.
+        setTimeout(showTextOnce, 100);
+
+      } catch (error) {
+        console.error("TTS error:", error);
+
+        // If voice fails, still show the tutor text.
+        showTextOnce();
+        setStatus("Voice error. Text shown.");
+      }
+    }
+
+    if ("webkitSpeechRecognition" in window || "SpeechRecognition" in window) {
+      const SpeechRecognition =
+        window.SpeechRecognition || window.webkitSpeechRecognition;
+
+      recognition = new SpeechRecognition();
+      recognition.lang = "en-US";
+      recognition.interimResults = true;
+      recognition.continuous = true;
+
+      recognition.onstart = () => {
+        isListening = true;
+        finalTranscript = "";
+        latestTranscript = "";
+        hasSubmittedSpeech = false;
+
+        if (silenceTimer) {
+          clearTimeout(silenceTimer);
+        }
+
+        speakButton.textContent = "🛑 Listening...";
+        setStatus("Listening...");
+      };
+
+      recognition.onresult = (event) => {
+        let interimTranscript = "";
+
+        for (let i = event.resultIndex; i < event.results.length; i++) {
+          const transcript = event.results[i][0].transcript;
+
+          if (event.results[i].isFinal) {
+            finalTranscript += transcript + " ";
+          } else {
+            interimTranscript += transcript;
+          }
+        }
+
+        latestTranscript = (finalTranscript + interimTranscript).trim();
+
+        if (latestTranscript) {
+          setStatus("Heard: " + latestTranscript);
+        }
+
+        if (silenceTimer) {
+          clearTimeout(silenceTimer);
+        }
+
+        silenceTimer = setTimeout(() => {
+          finishListeningAndSend();
+        }, SPEECH_END_DELAY);
+      };
+
+      recognition.onerror = (event) => {
+        console.error("Speech recognition error:", event);
+        setStatus("Microphone error: " + event.error);
+      };
+
+      recognition.onend = () => {
+        isListening = false;
+        speakButton.textContent = "🎤 Tap to speak";
+
+        if (!hasSubmittedSpeech && latestTranscript.trim()) {
+          finishListeningAndSend();
+        } else if (!latestTranscript.trim() && !isWaiting) {
+          setStatus("Ready.");
+        }
+      };
+    } else {
+      speakButton.disabled = true;
+      speakButton.textContent = "Mic not supported";
+      setStatus("Speech recognition is not supported in this browser.");
+    }
+
+    function finishListeningAndSend() {
+      const transcriptToSend = latestTranscript.trim();
+
+      if (!transcriptToSend || hasSubmittedSpeech || isWaiting) return;
+
+      hasSubmittedSpeech = true;
+
+      if (silenceTimer) {
+        clearTimeout(silenceTimer);
+      }
+
+      if (recognition && isListening) {
+        recognition.stop();
+      }
+
+      setStatus("You said: " + transcriptToSend);
+
+      setTimeout(() => {
+        sendMessage(transcriptToSend);
+      }, 300);
+    }
+
+    speakButton.addEventListener("click", () => {
+      if (!recognition || isWaiting) return;
+
+      if (currentAudio) {
+        currentAudio.pause();
+        currentAudio = null;
+      }
+
+      if (isListening) {
+        finishListeningAndSend();
+      } else {
+        recognition.start();
+      }
+    });
+  </script>
+</body>
+</html>
