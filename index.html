@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>3-Person English Conversation Tutor</title>
+  <title>Unit 6 Entertainment Tutor</title>
 
   <style>
     body {
@@ -119,13 +119,13 @@
 
 <body>
   <div class="container">
-    <h1>English Conversation Tutor 🎧</h1>
+    <h1>Unit 6 Entertainment Tutor 🎧</h1>
     <div class="subtitle">Two students talk with one AI conversation partner.</div>
 
     <div id="chatBox">
       <div class="message">
         <span class="tutor-label">Tutor:</span>
-        Hi! Let's talk about entertainment.
+        Hi. I’ll join your conversation as the third speaker. Let’s talk about entertainment.
       </div>
     </div>
 
@@ -159,6 +159,109 @@
 
     // 3000 = wait 3 seconds after the student stops speaking
     const SPEECH_END_DELAY = 3000;
+
+    const personas = [
+      {
+        name: "Sofia",
+        country: "Spain",
+        reason: "learning about Japanese pop culture",
+        personality: "warm, curious, and talkative",
+        likes: "live music, comedy movies, and photography",
+        dislikes: "horror movies and crowded trains"
+      },
+      {
+        name: "Liam",
+        country: "New Zealand",
+        reason: "snowboarding and visiting small towns in Japan",
+        personality: "relaxed, friendly, and outdoorsy",
+        likes: "rock music, action movies, and mountain towns",
+        dislikes: "big crowds and waking up early"
+      },
+      {
+        name: "Maya",
+        country: "India",
+        reason: "visiting Japanese universities and museums",
+        personality: "polite, thoughtful, and a little shy",
+        likes: "books, quiet cafes, and animated movies",
+        dislikes: "very noisy places and scary movies"
+      },
+      {
+        name: "Noah",
+        country: "Germany",
+        reason: "traveling around Japan by train",
+        personality: "calm, practical, and honest",
+        likes: "documentaries, science fiction, and trains",
+        dislikes: "being late and expensive restaurants"
+      },
+      {
+        name: "Ava",
+        country: "Brazil",
+        reason: "learning about Japanese festivals and music",
+        personality: "cheerful, energetic, and expressive",
+        likes: "dancing, festivals, J-pop, and comedy shows",
+        dislikes: "rainy days and quiet parties"
+      },
+      {
+        name: "Ethan",
+        country: "South Africa",
+        reason: "visiting a friend in Japan",
+        personality: "easygoing, funny, and social",
+        likes: "sports, games, barbecue, and meeting new people",
+        dislikes: "long lines and boring movies"
+      },
+      {
+        name: "Chloe",
+        country: "France",
+        reason: "learning about Japanese art, fashion, and film",
+        personality: "creative, stylish, and observant",
+        likes: "museums, fashion, coffee, and romantic comedies",
+        dislikes: "bad coffee and loud game centers"
+      },
+      {
+        name: "Omar",
+        country: "Egypt",
+        reason: "seeing Japanese castles and historical places",
+        personality: "curious, calm, and respectful",
+        likes: "history, movie soundtracks, and walking tours",
+        dislikes: "cold rain and getting lost"
+      },
+      {
+        name: "Ella",
+        country: "Finland",
+        reason: "experiencing Japanese nature and hot springs",
+        personality: "quiet, kind, and thoughtful",
+        likes: "reading, relaxing music, and nature videos",
+        dislikes: "humid weather and loud restaurants"
+      },
+      {
+        name: "Mateo",
+        country: "Mexico",
+        reason: "trying Japanese food and meeting local people",
+        personality: "funny, social, and adventurous",
+        likes: "soccer, karaoke, spicy food, and comedy movies",
+        dislikes: "strict schedules and bland food"
+      },
+      {
+        name: "Grace",
+        country: "Singapore",
+        reason: "shopping, sightseeing, and trying Japanese desserts",
+        personality: "friendly, organized, and curious",
+        likes: "social media, cafes, anime, and mystery movies",
+        dislikes: "messy plans and slow internet"
+      },
+      {
+        name: "Daniel",
+        country: "Ireland",
+        reason: "playing music and traveling around Japan",
+        personality: "funny, relaxed, and talkative",
+        likes: "guitar music, pubs, karaoke, and fantasy movies",
+        dislikes: "silent rooms and very spicy food"
+      }
+    ];
+
+    // Choose one random persona when the page loads.
+    // This stays the same for this conversation.
+    const selectedPersona = personas[Math.floor(Math.random() * personas.length)];
 
     function setStatus(text) {
       statusDiv.textContent = text;
@@ -217,38 +320,6 @@
       }
     }
 
-function getSessionId() {
-  let id = localStorage.getItem("conversationSessionId");
-
-  if (!id) {
-    id =
-      "session-" +
-      Date.now() +
-      "-" +
-      Math.random().toString(36).substring(2, 10);
-
-    localStorage.setItem("conversationSessionId", id);
-  }
-
-  return id;
-}
-
-function getSessionId() {
-  let id = localStorage.getItem("conversationSessionId");
-
-  if (!id) {
-    id =
-      "session-" +
-      Date.now() +
-      "-" +
-      Math.random().toString(36).substring(2, 10);
-
-    localStorage.setItem("conversationSessionId", id);
-  }
-
-  return id;
-}
-    
     async function sendMessage(speaker, userMessage) {
       if (!userMessage || isWaiting) return;
 
@@ -265,25 +336,18 @@ function getSessionId() {
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
-            history,
-
-            // This makes the current speaker clear to the chatbot.
-            message: `${speaker}: ${userMessage}`,
-
-            // This is useful if you update chat.js later to read speaker directly.
+            history: history,
+            message: userMessage,
             speaker: speaker,
-
-            // Optional: tells the backend this is a 2-student conversation.
             conversationMode: "two_students",
-
-            // This keeps the same random persona during the conversation.
-            sessionId: getSessionId(),
+            persona: selectedPersona
           }),
         });
 
         const data = await response.json();
 
         if (!response.ok) {
+          console.error("API error:", data);
           throw new Error(data.error || "API error");
         }
 
@@ -300,9 +364,9 @@ function getSessionId() {
         await showTutorReplyWithVoice(reply);
 
       } catch (error) {
-        console.error(error);
+        console.error("Frontend error:", error);
         addMessage("Tutor", "Sorry, something went wrong.");
-        setStatus("Error.");
+        setStatus("Error: " + error.message);
       } finally {
         isWaiting = false;
         setButtonsWaiting(false);
@@ -332,7 +396,7 @@ function getSessionId() {
           headers: {
             "Content-Type": "application/json",
           },
-          body: JSON.stringify({ text }),
+          body: JSON.stringify({ text: text }),
         });
 
         if (!response.ok) {
@@ -362,13 +426,10 @@ function getSessionId() {
 
         await currentAudio.play();
 
-        // Backup in case onplay is slow
         setTimeout(showTextOnce, 100);
 
       } catch (error) {
         console.error("TTS error:", error);
-
-        // If voice fails, still show the tutor text.
         showTextOnce();
         setStatus("Voice error. Text shown.");
       }
@@ -483,13 +544,11 @@ function getSessionId() {
         currentAudio = null;
       }
 
-      // If already listening and the same speaker presses again, stop and send.
       if (isListening && currentSpeaker === speaker) {
         finishListeningAndSend();
         return;
       }
 
-      // If already listening but the other speaker presses, stop first.
       if (isListening && currentSpeaker !== speaker) {
         recognition.stop();
       }
