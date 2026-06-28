@@ -217,6 +217,17 @@
       }
     }
 
+    function getSessionId() {
+  let id = localStorage.getItem("conversationSessionId");
+
+  if (!id) {
+    id = crypto.randomUUID();
+    localStorage.setItem("conversationSessionId", id);
+  }
+
+  return id;
+}
+    
     async function sendMessage(speaker, userMessage) {
       if (!userMessage || isWaiting) return;
 
@@ -243,6 +254,9 @@
 
             // Optional: tells the backend this is a 2-student conversation.
             conversationMode: "two_students",
+
+            // This keeps the same random persona during the conversation.
+            sessionId: getSessionId(),
           }),
         });
 
