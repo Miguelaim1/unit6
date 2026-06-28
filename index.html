@@ -232,6 +232,22 @@ function getSessionId() {
 
   return id;
 }
+
+function getSessionId() {
+  let id = localStorage.getItem("conversationSessionId");
+
+  if (!id) {
+    id =
+      "session-" +
+      Date.now() +
+      "-" +
+      Math.random().toString(36).substring(2, 10);
+
+    localStorage.setItem("conversationSessionId", id);
+  }
+
+  return id;
+}
     
     async function sendMessage(speaker, userMessage) {
       if (!userMessage || isWaiting) return;
